@@ -6,12 +6,29 @@
 #include "spinlock.h"
 #include "proc.h"
 
+
+/*
+int
+argstr(int n, char *buf, int max)
+{
+  uint64 addr;
+  argaddr(n, &addr);
+  return fetchstr(addr, buf, max);
+}
+*/
+
 uint64
 sys_exit(void)
 {
   int n;
+
+  //Task3
+  char  s[32] ;
+  argstr(0,s,32);
+  //
+
   argint(0, &n);
-  exit(n);
+  exit(n,s);
   return 0;  // not reached
 }
 
@@ -31,8 +48,9 @@ uint64
 sys_wait(void)
 {
   uint64 p;
+  char s[32]; //s buffer
   argaddr(0, &p);
-  return wait(p);
+  return wait(p,s);
 }
 
 uint64

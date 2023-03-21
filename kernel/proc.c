@@ -343,10 +343,15 @@ reparent(struct proc *p)
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait().
+
 void
-exit(int status)
+exit(int status, char* exit_msg)
 {
   struct proc *p = myproc();
+  
+  //Task3
+  //p->exit_msg = exit_msg;
+  safestrcpy(p->exit_msg,exit_msg,sizeof(p->exit_msg));
 
   if(p == initproc)
     panic("init exiting");
@@ -380,6 +385,7 @@ exit(int status)
 
   release(&wait_lock);
 
+
   // Jump into the scheduler, never to return.
   sched();
   panic("zombie exit");
@@ -387,8 +393,17 @@ exit(int status)
 
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
+
+/*
+// Copy from kernel to user.
+// Copy len bytes from src to virtual address dstva in a given page table.
+// Return 0 on success, -1 on error.
 int
-wait(uint64 addr)
+copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
+{
+*/
+int
+wait(uint64 addr , char* child_exit_msg)
 {
   struct proc *pp;
   int havekids, pid;
@@ -408,6 +423,10 @@ wait(uint64 addr)
         if(pp->state == ZOMBIE){
           // Found one.
           pid = pp->pid;
+
+          //task3
+          copyout(p->pagetable,addr,pp->exit_msg,32);
+      
           if(addr != 0 && copyout(p->pagetable, addr, (char *)&pp->xstate,
                                   sizeof(pp->xstate)) < 0) {
             release(&pp->lock);
@@ -431,6 +450,9 @@ wait(uint64 addr)
     
     // Wait for a child to exit.
     sleep(p, &wait_lock);  //DOC: wait-sleep
+
+    
+
   }
 }
 
