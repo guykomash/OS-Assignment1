@@ -1,8 +1,9 @@
-#include <stdio.h>
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
 
 int main(){
 
     printf("Hello World xv6\n");
-    return 0;
-    //just a test! 1510
+    exit(0,"Goodbye World!");
 }

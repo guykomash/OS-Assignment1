@@ -11,6 +11,8 @@
         "fcntl.h": "c",
         "fs.h": "c",
         "param.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "cstdlib": "c",
+        "file.h": "c"
     },
 }

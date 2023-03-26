@@ -348,9 +348,7 @@ void
 exit(int status, char* exit_msg)
 {
   struct proc *p = myproc();
-  
-  //Task3
-  //p->exit_msg = exit_msg;
+
   safestrcpy(p->exit_msg,exit_msg,sizeof(p->exit_msg));
 
   if(p == initproc)
@@ -403,12 +401,12 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 {
 */
 int
-wait(uint64 addr , char* child_exit_msg)
+ wait(uint64 addr , char* child_exit_msg)
 {
   struct proc *pp;
   int havekids, pid;
   struct proc *p = myproc();
-
+  printf("wait(): running by Process : pid - %d ,  name - %s\n",p->pid,p->name);
   acquire(&wait_lock);
 
   for(;;){
@@ -423,16 +421,16 @@ wait(uint64 addr , char* child_exit_msg)
         if(pp->state == ZOMBIE){
           // Found one.
           pid = pp->pid;
+          
+          printf("ZOMBIE FOUND: pid - %d ,  name - %s , exit msg- %s ,\n",pp->pid,pp->name,pp->exit_msg);
 
-          //task3
-          copyout(p->pagetable,addr,pp->exit_msg,32);
-      
           if(addr != 0 && copyout(p->pagetable, addr, (char *)&pp->xstate,
                                   sizeof(pp->xstate)) < 0) {
             release(&pp->lock);
             release(&wait_lock);
             return -1;
           }
+       
           freeproc(pp);
           release(&pp->lock);
           release(&wait_lock);

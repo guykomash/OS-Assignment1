@@ -31,6 +31,7 @@ main(void)
       exit(1,"init.c");
     }
     if(pid == 0){
+      
       exec("sh", argv);
       printf("init: exec sh failed\n");
       exit(1,"init.c");
@@ -39,7 +40,10 @@ main(void)
     for(;;){
       // this call to wait() returns if the shell exits,
       // or if a parentless process exits.
-      wpid = wait((int *) 0);
+      
+      
+      wpid = wait((int *) 0,0);
+
       if(wpid == pid){
         // the shell exited; restart it.
         break;

@@ -21,14 +21,12 @@ uint64
 sys_exit(void)
 {
   int n;
+  char  msg[32];//Task3
 
-  //Task3
-  char  s[32] ;
-  argstr(0,s,32);
-  //
-
+  argstr(1, msg, 32);
   argint(0, &n);
-  exit(n,s);
+  printf("sys_exit after argstr : %s\n",msg);
+  exit(n,msg);
   return 0;  // not reached
 }
 
@@ -48,9 +46,9 @@ uint64
 sys_wait(void)
 {
   uint64 p;
-  char s[32]; //s buffer
+  char  exit_msg[32]; //exit_msg buffer
   argaddr(0, &p);
-  return wait(p,s);
+  return wait(p,exit_msg);
 }
 
 uint64
@@ -61,7 +59,7 @@ sys_sbrk(void)
 
   argint(0, &n);
   addr = myproc()->sz;
-  if(growproc(n) < 0)
+  if(growproc(n) < 0) 
     return -1;
   return addr;
 }
