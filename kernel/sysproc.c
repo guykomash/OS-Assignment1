@@ -25,7 +25,6 @@ sys_exit(void)
 
   argstr(1, msg, 32);
   argint(0, &n);
-  printf("sys_exit after argstr : %s\n",msg);
   exit(n,msg);
   return 0;  // not reached
 }
@@ -46,9 +45,13 @@ uint64
 sys_wait(void)
 {
   uint64 p;
-  char  exit_msg[32]; //exit_msg buffer
+  char msg[32]; //exit_msg buffer
+  char * ptr = msg;
+  argstr(1,ptr,32);
   argaddr(0, &p);
-  return wait(p,exit_msg);
+  printf("sys_wait:  p = %d , msg = %s\n",p,ptr);
+
+  return wait(p,msg);
 }
 
 uint64

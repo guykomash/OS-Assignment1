@@ -149,6 +149,7 @@ main(void)
   static char buf[100];
   int fd;
   char exit_msg[32];
+  int status;
   // Ensure that three file descriptors are open.
   while((fd = open("console", O_RDWR)) >= 0){
     if(fd >= 3){
@@ -168,8 +169,9 @@ main(void)
     }
     if(fork1() == 0)
       runcmd(parsecmd(buf));
-    wait(0,exit_msg);
-    printf("EXITMSG IN SHELL: %s",exit_msg);
+
+    wait(&status,exit_msg);
+    printf("returned from wait. exit status: %d , exit message: %s\n",status,*exit_msg);
   }
   exit(0,"sh.c");
 }
