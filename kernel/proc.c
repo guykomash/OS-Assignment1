@@ -395,13 +395,12 @@ exit(int status, char* exit_msg)
 
 
 int
- wait(uint64 addr , char* child_exit_msg)
+ wait(uint64 addr , uint64 exit_msg_addr)
 {
   struct proc *pp;
   int havekids, pid;
   struct proc *p = myproc();
   
-  printf("wait(): running by Process : pid - %d ,  name - %s\n",p->pid,p->name);
   acquire(&wait_lock);
 
   for(;;){
@@ -416,9 +415,7 @@ int
         if(pp->state == ZOMBIE){
           // Found one.
           pid = pp->pid;
-          
-          printf("ZOMBIE FOUND: pid - %d ,  name - %s , exit msg- %s ,\n",pp->pid,pp->name,pp->exit_msg);
-          printf("Father FOUND: pid - %d ,  name - %s , exit msg- %s ,\n",p->pid,p->name,p->exit_msg);
+             
           if(addr != 0 && copyout(p->pagetable, addr, (char *)&pp->xstate,
                                   sizeof(pp->xstate)) < 0 )   {
             release(&pp->lock);
@@ -426,11 +423,8 @@ int
             return -1;
           }
           
-          // safestrcpy(child_exit_msg,pp->exit_msg,sizeof(pp->exit_msg));
-          // printf("copied exit_msg =  %s\n",child_exit_msg);
-          copyout(p->pagetable, (uint64) &child_exit_msg, (char *)&pp->exit_msg,sizeof(pp->exit_msg)) ;
-          printf("copied exit_msg =  %s\n",child_exit_msg);
-          printf("copied addr =  %d\n",addr);
+          copyout(p->pagetable, exit_msg_addr, (char *)&pp->exit_msg,sizeof(pp->exit_msg)); //Task 3/
+
           freeproc(pp);
           release(&pp->lock);
           release(&wait_lock);

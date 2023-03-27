@@ -45,13 +45,10 @@ uint64
 sys_wait(void)
 {
   uint64 p;
-  char msg[32]; //exit_msg buffer
-  char * ptr = msg;
-  argstr(1,ptr,32);
+  uint64 s;
   argaddr(0, &p);
-  printf("sys_wait:  p = %d , msg = %s\n",p,ptr);
-
-  return wait(p,msg);
+  argaddr(1, &s); //task 3
+  return wait(p,s); //task 3
 }
 
 uint64

@@ -148,7 +148,7 @@ main(void)
 
   static char buf[100];
   int fd;
-  char exit_msg[32];
+  char exit_msg[32]; //task 3
   int status;
   // Ensure that three file descriptors are open.
   while((fd = open("console", O_RDWR)) >= 0){
@@ -169,9 +169,8 @@ main(void)
     }
     if(fork1() == 0)
       runcmd(parsecmd(buf));
-
-    wait(&status,exit_msg);
-    printf("returned from wait. exit status: %d , exit message: %s\n",status,*exit_msg);
+    wait(&status,(int*)&exit_msg); //task3 . send to wait the address of exit_msg
+    printf("a child process of shell terminated with exit message: %s\n",exit_msg); // task 3
   }
   exit(0,"sh.c");
 }
