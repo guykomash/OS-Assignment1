@@ -5,5 +5,5 @@
 int main(){
 
     printf("Hello World xv6\n");
-    exit(3,"Goodbye World!");
+    exit(3,"");
 }

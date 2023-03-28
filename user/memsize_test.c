@@ -22,5 +22,5 @@ int main() {
 
     printf("memsize after free : %d \n",memsize());
 
-    exit(0,"memsize_test");
+    exit(0,"");
 }
