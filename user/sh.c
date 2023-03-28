@@ -170,7 +170,9 @@ main(void)
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(&status,(int*)&exit_msg); //task3 . send to wait the address of exit_msg
+    if (strcmp(exit_msg,"") != 0){
     printf("a child process of shell terminated with exit message: %s\n",exit_msg); // task 3
+  }
   }
   exit(0,"sh.c");
 }
@@ -179,7 +181,7 @@ void
 panic(char *s)
 {
   fprintf(2, "%s\n", s);
-  exit(1,"sh.c");
+  exit(1,"");
 }
 
 int
