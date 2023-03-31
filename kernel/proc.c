@@ -102,6 +102,56 @@ allocpid()
   return pid;
 }
 
+/*
+//get the minimum accumulator of all runnable/running procces.
+long long
+get_min_acc(void)
+{
+  struct proc *p;
+  int min_acc = proc->accumulator;
+  int count = 0;
+  for(p = proc; p < &proc[NPROC]; p++){
+      acquire(&p->lock);
+      if(p->state == RUNNABLE || p->state==RUNNING){
+        count ++;
+        if(min_acc > p->accumulator){
+        min_acc = p->accumulator;
+        }
+      }
+      release(&p->lock);
+  }
+  //if the current process is the only runnable process in the system return 0;
+  if (count == 1){
+      //printf ("The only runnable/running process: id=%d , name=%s \n",p->pid,p->name);
+      return 0;
+    }
+  return min_acc;
+}
+
+
+static struct proc*
+get_min_acc_proc(void){
+
+  struct proc *p;
+  int min_acc = proc->accumulator;
+  struct proc *min_proc = proc;
+    for(p = proc; p < &proc[NPROC]; p++){
+      printf("proc [%s]\n",p->name);
+      acquire(&p->lock);
+      if(p->state == RUNNABLE || p->state==RUNNING){
+        if(min_acc > p->accumulator){
+        min_acc = p->accumulator;
+        min_proc = p;
+        }
+      }
+      release(&p->lock);
+    }
+    printf("min proc [%s]\n",min_proc->name);
+  return min_proc;
+}
+*/
+
+
 // Look in the process table for an UNUSED proc.
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
@@ -124,6 +174,17 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+
+/*
+  //Task 4 . new procees.
+  //priority = 5, 
+  //accumulator = minimum value of all the runnable/running processes
+  //release lock for get_min_acc() , then acquire
+  release(&p->lock);
+  p->ps_priority = 5;
+  p->accumulator = get_min_acc();
+  acquire(&p->lock);
+  */
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -314,6 +375,8 @@ fork(void)
 
   release(&np->lock);
 
+ 
+
   acquire(&wait_lock);
   np->parent = p;
   release(&wait_lock);
@@ -460,12 +523,25 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  
+
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
+   /* 
+    //Task 4 scheduler
+    p = get_min_acc_proc();
+    printf("the next process (min acc) = %s\n",p->name);
+    acquire(&p->lock);
+    p->state = RUNNING;
+    c->proc = p;
+    swtch(&c->context, &p->context);
+    c->proc = 0;
+    release(&p->lock);
+
+    
+  */
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
@@ -479,9 +555,12 @@ scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
+
       }
       release(&p->lock);
     }
+
+     
   }
 }
 
@@ -587,6 +666,15 @@ wakeup(void *chan)
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
         p->state = RUNNABLE;
+        
+        /*
+        // Task 4
+        //release lock for get_min_acc() , then acquire
+        release(&p->lock);
+        p->accumulator = get_min_acc(); 
+        acquire(&p->lock);
+        */
+        
       }
       release(&p->lock);
     }
@@ -608,6 +696,15 @@ kill(int pid)
       if(p->state == SLEEPING){
         // Wake process from sleep().
         p->state = RUNNABLE;
+
+        /*
+        // Task 4
+        //release lock for get_min_acc() , then acquire
+        release(&p->lock);
+        p->accumulator = get_min_acc(); 
+        acquire(&p->lock);
+        */
+
       }
       release(&p->lock);
       return 0;
@@ -695,3 +792,4 @@ procdump(void)
     printf("\n");
   }
 }
+

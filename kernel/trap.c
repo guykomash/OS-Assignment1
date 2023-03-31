@@ -152,8 +152,16 @@ kerneltrap()
 
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
-    yield();
-
+    {
+       /*
+       // Task 4. add priority to accumulator on timer interrupts (time quantum is finished)
+      struct proc *p = myproc();
+      printf("Process name:[%s], priority:[%d] have finished a time quantum. changing acc from [%d] to",p->name,p->ps_priority,p->accumulator);
+      myproc()->accumulator += myproc()->ps_priority;
+      printf("%d\n",p->accumulator);
+      */
+      yield();
+    }
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
   w_sepc(sepc);
