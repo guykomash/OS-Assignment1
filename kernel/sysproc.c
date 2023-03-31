@@ -111,3 +111,14 @@ sys_memsize(void)
 {
   return myproc()->sz;
 }
+
+uint64
+sys_set_ps_priority(void)
+{
+  int p;
+  argint(0,&p);
+  printf("old process priority (printing from process): %d\n",myproc()->ps_priority);
+  myproc()->ps_priority  = p;
+  printf("the new priority (printing from process): %d\n",myproc()->ps_priority);
+  return p;
+}
