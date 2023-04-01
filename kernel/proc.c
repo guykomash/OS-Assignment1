@@ -110,7 +110,7 @@ get_min_acc(void)
   int runnables_counter = 0;
   int locked = 0;
 
-int min_acc = proc->accumulator;
+  int min_acc = -1;
   for(p = proc; p < &proc[NPROC]; p++){
 
           // prevent re-acquire by check if lock is held. if so - this is the running process
@@ -124,7 +124,13 @@ int min_acc = proc->accumulator;
             locked = 1;
             }
           if(p->state == RUNNABLE || p->state==RUNNING){
+
             runnables_counter ++;
+
+            //  the first runnable/running found => init min_acc 
+            if(min_acc == -1)
+              min_acc = p->accumulator;
+
             if(min_acc > p->accumulator)
               min_acc = p->accumulator;
           }
