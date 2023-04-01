@@ -530,46 +530,47 @@ scheduler(void)
     //Task 5
     struct proc * min_acc_proc = 0;
     for(p = proc; p < &proc[NPROC]; p++){
-    acquire(&p->lock);
-    if(p->state == RUNNABLE){
+      acquire(&p->lock);
+      if(p->state == RUNNABLE){
 
-      // update min_acc_proc when finding first RUNNABLE
-      if(min_acc_proc == 0) {min_acc_proc = p;}
+        // Update min_acc_proc when finding first RUNNABLE
+        if(min_acc_proc == 0) {min_acc_proc = p;}
 
-      if(min_acc_proc->accumulator > p->accumulator){
+        if(min_acc_proc->accumulator > p->accumulator){
 
-        // p is better then current min_acc_proc
-        // release current min_acc_proc lock , keep holding the p lock
+          // p is better then current min_acc_proc
+          // Release current min_acc_proc lock , keep holding the p lock
 
-        release(&min_acc_proc->lock);
-        min_acc_proc = p;
-        //printf("CPU %d holding min_acc_proc? %d\n",cpuid(),holding(&min_acc_proc->lock));
+          release(&min_acc_proc->lock);
+          min_acc_proc = p;
+          
+        }
       }
+
+      else {release(&p->lock);}
+      
     }
 
-    else {release(&p->lock);}
+    
+    if(min_acc_proc != 0){
       
+      // CPU FOUND A RUNNABLE PROCESS! 
+
+      min_acc_proc->state = RUNNING;
+      c->proc = min_acc_proc;
+      swtch(&c->context, &min_acc_proc->context);
+
+      // Process returned from context switch
+
+      c->proc = 0;
+      release(&min_acc_proc->lock);
+    }
+
+    // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
+
   }
-  
-  if(min_acc_proc != 0){
-
-    // CPU FOUND A RUNNABLE PROCESS! 
-
-    min_acc_proc->state = RUNNING;
-    c->proc = min_acc_proc;
-    swtch(&c->context, &min_acc_proc->context);
-
-    // Process returned from context switch
-
-    c->proc = 0;
-    release(&min_acc_proc->lock);
-  }
-
-  // !! ELSE NO CONTEXT SWITCH will happen. CPU will loop and try again to find a RUNNABLE process.
 
 }
-
-
     // OLD SCHEDULER
     // for(p = proc; p < &proc[NPROC]; p++) {
     //   acquire(&p->lock);
@@ -590,7 +591,7 @@ scheduler(void)
     //   release(&p->lock);
     // }
      
-  }
+ 
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
