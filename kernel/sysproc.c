@@ -117,8 +117,9 @@ sys_set_ps_priority(void)
 {
   int p;
   argint(0,&p);
-  printf("old process priority (printing from process): %d\n",myproc()->ps_priority);
+   printf("Process [id=%d] called set_ps_priority system call\n",myproc()->pid);
+  printf("Process [id=%d] old priority: %d\n",myproc()->pid,myproc()->ps_priority);
   myproc()->ps_priority  = p;
-  printf("the new priority (printing from process): %d\n",myproc()->ps_priority);
+  printf("Procees [id=%d] new priority: %d\n",myproc()->pid,myproc()->ps_priority);
   return p;
 }
