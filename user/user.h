@@ -24,6 +24,7 @@ int sleep(int);
 int uptime(void);
 int memsize(void);
 void set_ps_priority(int);
+int set_policy(int);
 
 
 // ulib.c

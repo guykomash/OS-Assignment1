@@ -503,8 +503,6 @@ int
     // Wait for a child to exit.
     sleep(p, &wait_lock);  //DOC: wait-sleep
 
-    
-
   }
 }
 
@@ -523,7 +521,16 @@ scheduler(void)
 
   c->proc = 0;
 
+  // Task 7 : init default sched_policy
+  sched_policy = 0;
+  int policy_flag = 3;
+
   for(;;){
+    if(sched_policy == 1){
+      if(policy_flag != 1){
+        printf("CPU %d priority scheduling policy [%d]\n",cpuid(),sched_policy);
+        policy_flag = 1;
+      }  
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
@@ -553,9 +560,8 @@ scheduler(void)
 
     
     if(min_acc_proc != 0){
-      
-      // CPU FOUND A RUNNABLE PROCESS! 
 
+      // CPU FOUND A RUNNABLE PROCESS! 
       min_acc_proc->state = RUNNING;
       c->proc = min_acc_proc;
       swtch(&c->context, &min_acc_proc->context);
@@ -567,29 +573,40 @@ scheduler(void)
     }
 
     // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
-
   }
+    else { 
 
+      if(policy_flag != 0){
+        printf("CPU %d default xv6 policy [%d]\n",cpuid(),sched_policy);
+        policy_flag = 0;
+        }  
+
+      // DEFAULT SCHEDULER
+
+      // Avoid deadlock by ensuring that devices can interrupt.
+      intr_on();
+
+      for(p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if(p->state == RUNNABLE) {
+          // Switch to chosen process.  It is the process's job
+          // to release its lock and then reacquire it
+          // before jumping back to us.
+          p->state = RUNNING;
+          c->proc = p;
+          swtch(&c->context, &p->context);
+
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
+        }
+        release(&p->lock);
+      }
+    }
+  }
 }
-    // OLD SCHEDULER
-    // for(p = proc; p < &proc[NPROC]; p++) {
-    //   acquire(&p->lock);
-    //   if(p->state == RUNNABLE) {
-    //     printf("Runnable process: %s\n",p->name);
-    //     // Switch to chosen process.  It is the process's job
-    //     // to release its lock and then reacquire it
-    //     // before jumping back to us.
-    //     p->state = RUNNING;
-    //     c->proc = p;
-    //     swtch(&c->context, &p->context);
 
-    //     // Process is done running for now.
-    //     // It should have changed its p->state before coming back.
-    //     c->proc = 0;
 
-    //   }
-    //   release(&p->lock);
-    // }
      
  
 
