@@ -154,7 +154,7 @@ kerneltrap()
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
-      struct proc *p = myproc();
+      // struct proc *p = myproc();
       // printf("Process name:[%s], priority:[%d] have finished a time quantum. changing acc from [%d] to",p->name,p->ps_priority,p->accumulator);
       myproc()->accumulator += myproc()->ps_priority;
       // printf("%d\n",p->accumulator);

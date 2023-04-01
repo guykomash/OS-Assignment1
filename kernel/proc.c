@@ -538,7 +538,7 @@ scheduler(void)
 
       if(min_acc_proc->accumulator > p->accumulator){
 
-        // p is better then current min_acc_pro
+        // p is better then current min_acc_proc
         // release current min_acc_proc lock , keep holding the p lock
 
         release(&min_acc_proc->lock);
@@ -547,8 +547,8 @@ scheduler(void)
       }
     }
 
-    else {
-      release(&p->lock);}
+    else {release(&p->lock);}
+      
   }
   
   if(min_acc_proc != 0){
