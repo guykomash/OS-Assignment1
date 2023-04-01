@@ -140,12 +140,13 @@ get_min_acc(void)
           release(&p->lock);
           locked = 0;
           }
-      }
+  }
       
-  //if the current process is the only runnable process in the system return 0;
+  // if the current process is the only runnable process in the system return 0;
   if (runnables_counter <= 1){
       return 0;
-      }    
+  }    
+
   return min_acc;
 }
 
@@ -519,7 +520,6 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  //struct proc *min_acc_proc = 0; // Task 5
 
   c->proc = 0;
 
@@ -528,7 +528,7 @@ scheduler(void)
     intr_on();
 
     //Task 5
-    struct proc *min_acc_proc = 0;
+    struct proc * min_acc_proc = 0;
     for(p = proc; p < &proc[NPROC]; p++){
     acquire(&p->lock);
     if(p->state == RUNNABLE){
@@ -553,25 +553,24 @@ scheduler(void)
   
   if(min_acc_proc != 0){
 
-  // the cpu found a runnable process
+    // CPU FOUND A RUNNABLE PROCESS! 
 
-  min_acc_proc->state = RUNNING;
-  c->proc = min_acc_proc;
-  swtch(&c->context, &min_acc_proc->context);
+    min_acc_proc->state = RUNNING;
+    c->proc = min_acc_proc;
+    swtch(&c->context, &min_acc_proc->context);
 
-  // Process returned 
+    // Process returned from context switch
 
-  c->proc = 0;
-  release(&min_acc_proc->lock);
-  min_acc_proc = 0;
-   }
+    c->proc = 0;
+    release(&min_acc_proc->lock);
+  }
 
-  // !! else no context switch will happen. cpu will loop and try again to find RUNNABLE process.
+  // !! ELSE NO CONTEXT SWITCH will happen. CPU will loop and try again to find a RUNNABLE process.
 
 }
 
 
-    //OLD SCHEDULER
+    // OLD SCHEDULER
     // for(p = proc; p < &proc[NPROC]; p++) {
     //   acquire(&p->lock);
     //   if(p->state == RUNNABLE) {

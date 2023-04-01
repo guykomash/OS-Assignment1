@@ -157,7 +157,7 @@ kerneltrap()
       struct proc *p = myproc();
       // printf("Process name:[%s], priority:[%d] have finished a time quantum. changing acc from [%d] to",p->name,p->ps_priority,p->accumulator);
       myproc()->accumulator += myproc()->ps_priority;
-      printf("%d\n",p->accumulator);
+      // printf("%d\n",p->accumulator);
       yield();
     }
   // the yield() may have caused some traps to occur,
