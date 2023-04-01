@@ -102,54 +102,51 @@ allocpid()
   return pid;
 }
 
-/*
-//get the minimum accumulator of all runnable/running procces.
+
+//get the minimum accumulator of all runnable/running procces. if there is only
 long long
 get_min_acc(void)
 {
   struct proc *p;
-  int min_acc = proc->accumulator;
-  int count = 0;
+  int min_acc = myproc()->accumulator;
+  int hasother = 0;
   for(p = proc; p < &proc[NPROC]; p++){
-      acquire(&p->lock);
-      if(p->state == RUNNABLE || p->state==RUNNING){
-        count ++;
-        if(min_acc > p->accumulator){
-        min_acc = p->accumulator;
+      if(p!=myproc()){
+        acquire(&p->lock);
+        if(p->state == RUNNABLE || p->state==RUNNING){
+          hasother ++;
+          if(min_acc > p->accumulator)
+            min_acc = p->accumulator;
         }
-      }
-      release(&p->lock);
+        release(&p->lock);
+    }
   }
   //if the current process is the only runnable process in the system return 0;
-  if (count == 1){
-      //printf ("The only runnable/running process: id=%d , name=%s \n",p->pid,p->name);
+  if (hasother > 0)
       return 0;
-    }
   return min_acc;
 }
 
-
+//get the next proc to run with minimum accumulator. run by cpu ?
 static struct proc*
 get_min_acc_proc(void){
 
   struct proc *p;
-  int min_acc = proc->accumulator;
-  struct proc *min_proc = proc;
-    for(p = proc; p < &proc[NPROC]; p++){
-      printf("proc [%s]\n",p->name);
-      acquire(&p->lock);
-      if(p->state == RUNNABLE || p->state==RUNNING){
-        if(min_acc > p->accumulator){
-        min_acc = p->accumulator;
-        min_proc = p;
+  struct proc *min_acc_proc = myproc();
+  int hasother = 0;
+  for(p = proc; p < &proc[NPROC]; p++){
+      if(p!=myproc()){
+        acquire(&p->lock);
+        if(p->state == RUNNABLE || p->state==RUNNING){
+          hasother = 1;
+          if(min_acc_proc->accumulator > p->accumulator)
+            min_acc_proc = p;
         }
-      }
-      release(&p->lock);
+        release(&p->lock);
     }
-    printf("min proc [%s]\n",min_proc->name);
-  return min_proc;
+  }
+  return min_acc_proc;
 }
-*/
 
 
 // Look in the process table for an UNUSED proc.
