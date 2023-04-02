@@ -11,24 +11,24 @@
 
 int main( int argc, char *argv[] ) {
 
-    int failure = 1;
-
     if(argc == 2) {
-        int policy = atoi(argv[1]);
-        failure = set_policy(policy);
-
-        if(!failure){
-            exit(0,"");
-        }
+        if (*argv[1] >= '0' && *argv[1] <= '2') {
+            if(!set_policy(atoi(argv[1]))){
+                exit(0,"");
+            }
+            else{
+                exit(1,"Wrong policy code: use 0/1/2");
+            }
+        }    
         else {
-            exit(1,"ERROR: Wrong policy code");
+            exit(1,"Wrong policy code: use 0/1/2");
         }
     }
     else if(argc > 2) {
-        exit(1,"ERROR: Too many arguments in policy");
+        exit(1,"Too many arguments in policy");
     }
    else {
-        exit(1,"ERROR: Policy code argument missing");
+        exit(1,"Policy code argument missing");
    }
 
 }

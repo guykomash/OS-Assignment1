@@ -135,8 +135,8 @@ sys_set_policy(void)
   
 
   if(p == 0 || p==1 || p==2){
-    printf("policy changing from %d to %d\n",sched_policy,p);
     sched_policy = p;
+    printf("scheduling policy changed [%d]\n",sched_policy);
     return 0;
   }
   return -1;
