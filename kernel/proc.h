@@ -107,4 +107,8 @@ struct proc {
   char exit_msg[32];           // Task 3
   long long accumulator;       // Task 5
   int ps_priority;             // Task 5
+  int cfs_priority;            // Task 6
+  int rtime;                   // Task 6
+  int stime;                   // Task 6
+  int retime;                  // Task 6
 };

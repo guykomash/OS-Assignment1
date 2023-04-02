@@ -166,13 +166,16 @@ kerneltrap()
   w_sstatus(sstatus);
 }
 
+int update_vruntime();
 void
 clockintr()
 {
   acquire(&tickslock);
   ticks++;
+  update_vruntime();
   wakeup(&ticks);
   release(&tickslock);
+
 }
 
 // check if it's an external interrupt or software interrupt,

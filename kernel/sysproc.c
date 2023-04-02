@@ -125,6 +125,28 @@ sys_set_ps_priority(void)
   return p;
 }
 
+//task6
+uint64
+sys_set_cfs_priority(void){
+  int p;
+  argint(0,&p);
+  if (p==0 || p==1 || p==2){
+    printf("setting  %d priority to %s process\n",p,myproc()->name);
+    myproc()->cfs_priority=p;
+    return 0;
+  }
+  else
+    return -1;
+  }
+void get_cfs_process_status(int pid);
+void
+sys_get_cfs_status(void){
+  int p;
+  argint(0,&p);
+  get_cfs_process_status(p);
+  }
+
+
 
 //task 7
 uint64
@@ -132,7 +154,6 @@ sys_set_policy(void)
 {
   int p;
   argint(0,&p);
-  
 
   if(p == 0 || p==1 || p==2){
     printf("policy changing from %d to %d\n",sched_policy,p);

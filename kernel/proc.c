@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include <math.h>
 
 struct cpu cpus[NCPU];
 
@@ -200,8 +201,16 @@ found:
   //Task 5 new procees
   //priority = 5, 
   //accumulator = minimum value of all the runnable/running processes
+  if(sched_policy==1){
   p->ps_priority = 5;
   p->accumulator = get_min_acc();
+  }
+  if (sched_policy==2){
+    p->cfs_priority=1;
+    p->rtime=0;
+    p->retime=0;
+    p->stime=0;
+  }
 
   return p;
 }
@@ -376,6 +385,7 @@ fork(void)
 
   acquire(&wait_lock);
   np->parent = p;
+  np->cfs_priority=p->cfs_priority;
   release(&wait_lock);
 
   acquire(&np->lock);
@@ -574,6 +584,54 @@ scheduler(void)
 
     // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
   }
+        if(sched_policy == 2){
+      if(policy_flag != 2){
+        printf("CPU %d priority scheduling policy [%d]\n",cpuid(),sched_policy);
+        policy_flag = 2;
+      }  
+    // Avoid deadlock by ensuring that devices can interrupt.
+    intr_on();
+
+    //Task 5
+    struct proc * min_cfs_proc = 0;
+    float min_vruntime=INFINITY;
+    for(p = proc; p < &proc[NPROC]; p++){
+      acquire(&p->lock);
+      if(p->state == RUNNABLE){
+        //calculate the vruntime
+        int decay_factor= p->cfs_priority*25 +75;
+        int vruntime= decay_factor*(p->rtime/(p->rtime+p->stime+p->retime));
+        if (vruntime<min_vruntime){
+
+          // p is better then current min_cfs_proc
+          // Release current min_acc_proc lock , keep holding the p lock
+            release(&min_cfs_proc->lock);
+            min_cfs_proc=p;
+            min_vruntime=vruntime;
+          
+        }
+      }
+
+      else {release(&p->lock);}
+      
+    }
+
+    
+    if(min_cfs_proc != 0){
+
+      // CPU FOUND A RUNNABLE PROCESS! 
+      min_cfs_proc->state = RUNNING;
+      c->proc = min_cfs_proc;
+      swtch(&c->context, &min_cfs_proc->context);
+
+      // Process returned from context switch
+
+      c->proc = 0;
+      release(&min_cfs_proc->lock);
+    }
+
+    // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
+  }
     else { 
 
       if(policy_flag != 0){
@@ -699,6 +757,41 @@ sleep(void *chan, struct spinlock *lk)
   release(&p->lock);
   acquire(lk);
 }
+//Task 7
+int
+update_vruntime(void)
+{
+  struct proc *p;
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+    if(p != myproc()){
+      acquire(&p->lock);
+      if(p->state == SLEEPING) 
+        p->stime++;
+      if(p->state == RUNNABLE)
+        p->retime++;   
+      release(&p->lock);
+    }
+    else
+      p->rtime++;
+  }
+  return 1;
+}
+void
+get_cfs_process_status(int pid){
+  
+  struct proc *p;
+  struct proc *chosen_proc=0;
+  for(p = proc; p < &proc[NPROC]; p++) {
+    if(p->pid== pid)
+       chosen_proc=p;
+  }
+  printf("prcossec cfs status: runnable time %d , run time %d, sleep time:%d\n",chosen_proc->retime,chosen_proc->rtime, chosen_proc->stime);
+}
+
+
+
+
 
 // Wake up all processes sleeping on chan.
 // Must be called without any p->lock.
@@ -715,9 +808,11 @@ wakeup(void *chan)
         
         /**/
         // Task 5
+        if( sched_policy== 1){
         int new_acc = get_min_acc();
         //printf("wakeup(): old acc %d , new acc %d\n",p->accumulator,new_acc);
         p->accumulator = new_acc;
+        }
 
         
         
@@ -726,6 +821,7 @@ wakeup(void *chan)
     }
   }
 }
+
 
 // Kill the process with the given pid.
 // The victim won't exit until it tries to return
@@ -745,9 +841,11 @@ kill(int pid)
 
         /**/
         // Task 5
+        if(sched_policy==1){
         int new_acc = get_min_acc();
         //printf("kill(): old acc %d , new acc %d\n",p->accumulator,new_acc);
         p->accumulator = new_acc;
+        }
 
       }
       release(&p->lock);
