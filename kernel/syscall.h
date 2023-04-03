@@ -22,3 +22,6 @@
 #define SYS_close  21
 #define SYS_memsize 22
 #define SYS_set_ps_priority 23
+
+// task 7 keep space for task 6
+#define SYS_set_policy 25 

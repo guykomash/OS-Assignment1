@@ -6,6 +6,8 @@
 #include "spinlock.h"
 #include "proc.h"
 
+int sched_policy;
+
 
 /*
 int
@@ -117,8 +119,25 @@ sys_set_ps_priority(void)
 {
   int p;
   argint(0,&p);
-  printf("old process priority (printing from process): %d\n",myproc()->ps_priority);
+  printf("Process [id=%d] old priority: %d\n",myproc()->pid,myproc()->ps_priority);
   myproc()->ps_priority  = p;
-  printf("the new priority (printing from process): %d\n",myproc()->ps_priority);
+  printf("Procees [id=%d] new priority: %d\n",myproc()->pid,myproc()->ps_priority);
   return p;
+}
+
+
+//task 7
+uint64
+sys_set_policy(void)
+{
+  int p;
+  argint(0,&p);
+  
+
+  if(p == 0 || p==1 || p==2){
+    sched_policy = p;
+    printf("scheduling policy changed [%d]\n",sched_policy);
+    return 0;
+  }
+  return -1;
 }

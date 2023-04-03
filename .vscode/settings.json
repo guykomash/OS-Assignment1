@@ -13,6 +13,7 @@
         "param.h": "c",
         "stdio.h": "c",
         "cstdlib": "c",
-        "file.h": "c"
+        "file.h": "c",
+        "proc.h": "c"
     },
 }
