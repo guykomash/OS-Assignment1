@@ -77,8 +77,12 @@ usertrap(void)
     exit(-1,"trap.c");
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2){
+    // Task 5 user-space timer interrupt??
+    myproc()->accumulator += myproc()->ps_priority;
+    
     yield();
+    }
 
   usertrapret();
 }
