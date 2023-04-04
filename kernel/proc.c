@@ -411,7 +411,6 @@ exit(int status, char* exit_msg)
 
   safestrcpy(p->exit_msg,exit_msg,sizeof(p->exit_msg));
 
-
   if(p == initproc)
     panic("init exiting");
 
@@ -483,8 +482,13 @@ int
             return -1;
           }
           
-          copyout(p->pagetable, exit_msg_addr, (char *)&pp->exit_msg,sizeof(pp->exit_msg)); //Task 3/
-
+          if(exit_msg_addr!= 0 && copyout(p->pagetable, exit_msg_addr, (char *)&pp->exit_msg,
+                                sizeof(pp->exit_msg)) < 0)   {
+            release(&pp->lock);
+            release(&wait_lock);
+            return -1;
+          }
+          
           freeproc(pp);
           release(&pp->lock);
           release(&wait_lock);
