@@ -11,7 +11,7 @@ _main()
 {
   extern int main();
   main();
-  exit(0,"ulib.c");
+  exit(0,"");
 }
 
 char*
