@@ -33,6 +33,7 @@ trapinithart(void)
 // handle an interrupt, exception, or system call from user space.
 // called from trampoline.S
 //
+void update_vruntime();
 void
 usertrap(void)
 {
@@ -77,8 +78,12 @@ usertrap(void)
     exit(-1,"trap.c");
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2){
+      printf("Process name:[%d], priority:[%d] have finished a time quantum",p->pid,p->cfs_priority);
+      update_vruntime();
+    update_vruntime();
     yield();
+  }
 
   usertrapret();
 }
@@ -128,7 +133,6 @@ usertrapret(void)
   uint64 trampoline_userret = TRAMPOLINE + (userret - trampoline);
   ((void (*)(uint64))trampoline_userret)(satp);
 }
-
 // interrupts and exceptions from kernel code go here via kernelvec,
 // on whatever the current kernel stack is.
 void 
@@ -154,8 +158,9 @@ kerneltrap()
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
-      // struct proc *p = myproc();
-      // printf("Process name:[%s], priority:[%d] have finished a time quantum. changing acc from [%d] to",p->name,p->ps_priority,p->accumulator);
+       struct proc *p = myproc();
+       printf("Process name:[%d], priority:[%d] have finished a time quantum",p->pid,p->cfs_priority);
+      update_vruntime();
       myproc()->accumulator += myproc()->ps_priority;
       // printf("%d\n",p->accumulator);
       yield();
@@ -166,13 +171,12 @@ kerneltrap()
   w_sstatus(sstatus);
 }
 
-int update_vruntime();
+
 void
 clockintr()
 {
   acquire(&tickslock);
   ticks++;
-  update_vruntime();
   wakeup(&ticks);
   release(&tickslock);
 

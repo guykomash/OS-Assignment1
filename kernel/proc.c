@@ -201,11 +201,12 @@ found:
   //Task 5 new procees
   //priority = 5, 
   //accumulator = minimum value of all the runnable/running processes
+  sched_policy=2;
   if(sched_policy==1){
   p->ps_priority = 5;
   p->accumulator = get_min_acc();
   }
-  if (sched_policy==2){
+  if (sched_policy==2){;
     p->cfs_priority=1;
     p->rtime=0;
     p->retime=0;
@@ -532,7 +533,7 @@ scheduler(void)
   c->proc = 0;
 
   // Task 7 : init default sched_policy
-  sched_policy = 0;
+  sched_policy = 2;
   int policy_flag = 3;
 
   for(;;){
@@ -591,13 +592,19 @@ scheduler(void)
       }  
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
-
     //Task 5
     struct proc * min_cfs_proc = 0;
-    float min_vruntime=INFINITY;
+    int min_vruntime=0;
     for(p = proc; p < &proc[NPROC]; p++){
       acquire(&p->lock);
       if(p->state == RUNNABLE){
+        if (min_cfs_proc == 0){
+           min_cfs_proc=p;
+           int decay_factor= p->cfs_priority*25 +75;
+           int vruntime= decay_factor*(p->rtime/(p->rtime+p->stime+p->retime));
+           min_vruntime=vruntime;
+        }
+        else{
         //calculate the vruntime
         int decay_factor= p->cfs_priority*25 +75;
         int vruntime= decay_factor*(p->rtime/(p->rtime+p->stime+p->retime));
@@ -610,15 +617,19 @@ scheduler(void)
             min_vruntime=vruntime;
           
         }
+        else{release(&p->lock);}
+        }
       }
 
-      else {release(&p->lock);}
+       else {release(&p->lock);}
       
     }
 
     
     if(min_cfs_proc != 0){
-
+      // if(min_cfs_proc->pid!=0 && min_cfs_proc->pid!=1 && min_cfs_proc->pid!=2 ){
+      //   printf("chosen proc is pid:%d with priority %d", min_cfs_proc->pid,min_cfs_proc->cfs_priority);
+      // }
       // CPU FOUND A RUNNABLE PROCESS! 
       min_cfs_proc->state = RUNNING;
       c->proc = min_cfs_proc;
@@ -632,7 +643,7 @@ scheduler(void)
 
     // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
   }
-    else { 
+    if (sched_policy==0){ 
 
       if(policy_flag != 0){
         printf("CPU %d default xv6 policy [%d]\n",cpuid(),sched_policy);
@@ -764,33 +775,30 @@ update_vruntime(void)
   struct proc *p;
 
   for(p = proc; p < &proc[NPROC]; p++) {
+   
     if(p != myproc()){
       acquire(&p->lock);
-      if(p->state == SLEEPING) 
+      if(p->state == SLEEPING) {
+         if (p->pid !=0 && p->pid !=1 && p->pid !=2)
+        printf("update the sleeping time  pid %d", p->pid);
         p->stime++;
-      if(p->state == RUNNABLE)
-        p->retime++;   
+      }
+      if(p->state == RUNNABLE){
+        p->retime++;  
+         if (p->pid !=0 && p->pid !=1 && p->pid !=2)
+        printf("update the runnable time  pid %d", p->pid); 
+      }
       release(&p->lock);
     }
-    else
-      p->rtime++;
+    else{
+      p->rtime++;{
+       if (p->pid !=0 && p->pid !=1 && p->pid !=2)
+      printf("update the running time  pid %d", p->pid); 
+      }
+    }
   }
   return 1;
 }
-void
-get_cfs_process_status(int pid){
-  
-  struct proc *p;
-  struct proc *chosen_proc=0;
-  for(p = proc; p < &proc[NPROC]; p++) {
-    if(p->pid== pid)
-       chosen_proc=p;
-  }
-  printf("prcossec cfs status: runnable time %d , run time %d, sleep time:%d\n",chosen_proc->retime,chosen_proc->rtime, chosen_proc->stime);
-}
-
-
-
 
 
 // Wake up all processes sleeping on chan.

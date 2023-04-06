@@ -138,13 +138,11 @@ sys_set_cfs_priority(void){
   else
     return -1;
   }
-void get_cfs_process_status(int pid);
+
 void
 sys_get_cfs_status(void){
-  int p;
-  argint(0,&p);
-  get_cfs_process_status(p);
-  }
+  printf("prcossec pid %d cfs status: runnable time %d , run time %d, sleep time:%d\n",myproc()->pid,myproc()->retime,myproc()->rtime, myproc()->stime);
+}
 
 
 
