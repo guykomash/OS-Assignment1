@@ -196,17 +196,16 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
   
-
+  sched_policy = 2;
 
   //Task 5 new procees
   //priority = 5, 
   //accumulator = minimum value of all the runnable/running processes
-  sched_policy=2;
   if(sched_policy==1){
   p->ps_priority = 5;
   p->accumulator = get_min_acc();
   }
-  if (sched_policy==2){;
+  if (sched_policy==2){
     p->cfs_priority=1;
     p->rtime=0;
     p->retime=0;
@@ -422,7 +421,6 @@ exit(int status, char* exit_msg)
 
   safestrcpy(p->exit_msg,exit_msg,sizeof(p->exit_msg));
 
-
   if(p == initproc)
     panic("init exiting");
 
@@ -494,8 +492,13 @@ int
             return -1;
           }
           
-          copyout(p->pagetable, exit_msg_addr, (char *)&pp->exit_msg,sizeof(pp->exit_msg)); //Task 3/
-
+          if(exit_msg_addr!= 0 && copyout(p->pagetable, exit_msg_addr, (char *)&pp->exit_msg,
+                                sizeof(pp->exit_msg)) < 0)   {
+            release(&pp->lock);
+            release(&wait_lock);
+            return -1;
+          }
+          
           freeproc(pp);
           release(&pp->lock);
           release(&wait_lock);
@@ -585,7 +588,7 @@ scheduler(void)
 
     // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
   }
-        if(sched_policy == 2){
+      if(sched_policy == 2){
       if(policy_flag != 2){
         printf("CPU %d priority scheduling policy [%d]\n",cpuid(),sched_policy);
         policy_flag = 2;
@@ -594,22 +597,32 @@ scheduler(void)
     intr_on();
     //Task 5
     struct proc * min_cfs_proc = 0;
-    int min_vruntime=0;
+    long long min_vruntime=0;
     for(p = proc; p < &proc[NPROC]; p++){
       acquire(&p->lock);
       if(p->state == RUNNABLE){
         if (min_cfs_proc == 0){
            min_cfs_proc=p;
-           int decay_factor= p->cfs_priority*25 +75;
-           int vruntime= decay_factor*(p->rtime/(p->rtime+p->stime+p->retime));
+           long long decay_factor= p->cfs_priority*25 +75;
+           long long total_time=p->rtime+p->stime+p->retime;
+           long long vruntime= decay_factor*p->rtime/total_time;
            min_vruntime=vruntime;
+        //  printf("my 0 decay : %d of procees %d\n",decay_factor,p->pid);
+        //  printf("my 0 total run time : %d of procees %d\n",total_time,p->pid);
+         printf("my  0 vruntime : %d of procees %d\n",vruntime,p->pid);
         }
         else{
         //calculate the vruntime
-        int decay_factor= p->cfs_priority*25 +75;
-        int vruntime= decay_factor*(p->rtime/(p->rtime+p->stime+p->retime));
+           long long decay_factor= p->cfs_priority*25 +75;
+           long long total_time=p->rtime+p->stime+p->retime;
+           //long long fraction= p->rtime/total_time;
+           long long vruntime= decay_factor*p->rtime/total_time;
+        //  printf("my  decay : %d of procees %d\n",decay_factor,p->pid);
+        //  printf("my  total run time : %d of procees %d\n",total_time,p->pid);
+        //   printf("my  fraction time : %d of procees %d\n",fraction,p->pid);
+        printf("my  vruntime : %d of procees %d\n",vruntime,p->pid);
         if (vruntime<min_vruntime){
-
+               printf("my chosen vruntime : %d of procees %d\n",vruntime,p->pid);
           // p is better then current min_cfs_proc
           // Release current min_acc_proc lock , keep holding the p lock
             release(&min_cfs_proc->lock);
@@ -631,6 +644,7 @@ scheduler(void)
       //   printf("chosen proc is pid:%d with priority %d", min_cfs_proc->pid,min_cfs_proc->cfs_priority);
       // }
       // CPU FOUND A RUNNABLE PROCESS! 
+     
       min_cfs_proc->state = RUNNING;
       c->proc = min_cfs_proc;
       swtch(&c->context, &min_cfs_proc->context);
@@ -663,6 +677,7 @@ scheduler(void)
           // before jumping back to us.
           p->state = RUNNING;
           c->proc = p;
+          printf("chosen proc is pid: %d\n",p->pid);
           swtch(&c->context, &p->context);
 
           // Process is done running for now.
@@ -702,6 +717,7 @@ sched(void)
     panic("sched interruptible");
 
   intena = mycpu()->intena;
+  // printf("switching context from sched pid %d\n",p->pid);
   swtch(&p->context, &mycpu()->context);
   mycpu()->intena = intena;
 }
@@ -744,7 +760,8 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
-  
+ 
+    // printf("entered to sleep pid:%d\n",p->pid);
   // Must acquire p->lock in order to
   // change p->state and then call sched.
   // Once we hold p->lock, we can be
@@ -758,7 +775,6 @@ sleep(void *chan, struct spinlock *lk)
   // Go to sleep.
   p->chan = chan;
   p->state = SLEEPING;
-
   sched();
 
   // Tidy up.
@@ -776,29 +792,29 @@ update_vruntime(void)
 
   for(p = proc; p < &proc[NPROC]; p++) {
    
-    if(p != myproc()){
+    // if(p != myproc()){
       acquire(&p->lock);
       if(p->state == SLEEPING) {
-         if (p->pid !=0 && p->pid !=1 && p->pid !=2)
-        printf("update the sleeping time  pid %d", p->pid);
+        //  if (p->pid !=0 && p->pid !=1 && p->pid !=2)
+        // printf("update the sleeping time  pid %d", p->pid);
         p->stime++;
       }
       if(p->state == RUNNABLE){
         p->retime++;  
-         if (p->pid !=0 && p->pid !=1 && p->pid !=2)
-        printf("update the runnable time  pid %d", p->pid); 
+        //  if (p->pid !=0 && p->pid !=1 && p->pid !=2)
+        // printf("update the runnable time  pid %d\n", p->pid); 
+      }
+      if(p->state == RUNNING){
+          p->rtime++;
+          // if (p->pid !=0 && p->pid !=1 && p->pid !=2)
+          // printf("update the running time  pid %d", p->pid); 
       }
       release(&p->lock);
+
     }
-    else{
-      p->rtime++;{
-       if (p->pid !=0 && p->pid !=1 && p->pid !=2)
-      printf("update the running time  pid %d", p->pid); 
-      }
-    }
+      return 1;
   }
-  return 1;
-}
+
 
 
 // Wake up all processes sleeping on chan.

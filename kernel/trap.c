@@ -37,6 +37,7 @@ void update_vruntime();
 void
 usertrap(void)
 {
+  // printf("entered tu user trap\n");
   int which_dev = 0;
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
@@ -55,7 +56,7 @@ usertrap(void)
     // system call
 
     if(killed(p))
-      exit(-1,"trap.c");
+      exit(-1,"");
 
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
@@ -75,12 +76,11 @@ usertrap(void)
   }
 
   if(killed(p))
-    exit(-1,"trap.c");
-
+    exit(-1,"");
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2){
-      printf("Process name:[%d], priority:[%d] have finished a time quantum",p->pid,p->cfs_priority);
-      update_vruntime();
+    myproc()->accumulator += myproc()->ps_priority;
+    printf("Process name:[%d], priority:[%d] have finished a time quantum\n",p->pid,p->cfs_priority);
     update_vruntime();
     yield();
   }
@@ -158,11 +158,11 @@ kerneltrap()
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
-       struct proc *p = myproc();
-       printf("Process name:[%d], priority:[%d] have finished a time quantum",p->pid,p->cfs_priority);
+      struct proc *p = myproc();
+      printf("Process name:[%d], priority:[%d] have finished a time quantum\n",p->pid,p->cfs_priority);
       update_vruntime();
       myproc()->accumulator += myproc()->ps_priority;
-      // printf("%d\n",p->accumulator);
+       //printf("%d\n",p->accumulator);
       yield();
     }
   // the yield() may have caused some traps to occur,
@@ -177,7 +177,9 @@ clockintr()
 {
   acquire(&tickslock);
   ticks++;
+  update_vruntime();
   wakeup(&ticks);
+  update_vruntime();
   release(&tickslock);
 
 }
@@ -221,11 +223,9 @@ devintr()
     if(cpuid() == 0){
       clockintr();
     }
-    
     // acknowledge the software interrupt by clearing
     // the SSIP bit in sip.
     w_sip(r_sip() & ~2);
-
     return 2;
   } else {
     return 0;

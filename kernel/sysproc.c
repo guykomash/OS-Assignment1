@@ -71,7 +71,6 @@ sys_sleep(void)
 {
   int n;
   uint ticks0;
-
   argint(0, &n);
   acquire(&tickslock);
   ticks0 = ticks;
@@ -141,7 +140,17 @@ sys_set_cfs_priority(void){
 
 void
 sys_get_cfs_status(void){
-  printf("prcossec pid %d cfs status: runnable time %d , run time %d, sleep time:%d\n",myproc()->pid,myproc()->retime,myproc()->rtime, myproc()->stime);
+  uint64 addr;
+  argaddr(0,&addr);
+  int arr[4];
+  arr[0]=myproc()->pid;
+  arr[1]=myproc()->rtime;
+  arr[2]=myproc()->retime;
+  arr[3]=myproc()->stime;
+  if(addr != 0 && copyout(myproc()->pagetable, addr, (char *)&arr,
+                                  sizeof(arr))<0)
+    // printf("prcossec pid %d cfs status: runnable time %d , run time %d, sleep time:%d\n",myproc()->pid,myproc()->retime,myproc()->rtime, myproc()->stime);
+    printf("procees geting cfs pid :\n",myproc()->pid);
 }
 
 
@@ -154,8 +163,8 @@ sys_set_policy(void)
   argint(0,&p);
 
   if(p == 0 || p==1 || p==2){
-    printf("policy changing from %d to %d\n",sched_policy,p);
     sched_policy = p;
+    printf("scheduling policy changed [%d]\n",sched_policy);
     return 0;
   }
   return -1;

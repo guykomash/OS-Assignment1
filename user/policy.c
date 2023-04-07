@@ -9,26 +9,16 @@
 #include "kernel/riscv.h"
 
 
+
 int main( int argc, char *argv[] ) {
 
-    int failure = 1;
 
-    if(argc == 2) {
-        int policy = atoi(argv[1]);
-        failure = set_policy(policy);
+    if(argc==2){
+        if(*argv[1] >= '0' && *argv[1] <= '2')
+            if(!set_policy(atoi(argv[1])))
+                  exit(0,"");
+    } 
 
-        if(!failure){
-            exit(0,"");
-        }
-        else {
-            exit(1,"ERROR: Wrong policy code");
-        }
-    }
-    else if(argc > 2) {
-        exit(1,"ERROR: Too many arguments in policy");
-    }
-   else {
-        exit(1,"ERROR: Policy code argument missing");
-   }
-
+    fprintf(2,"usage: policy [policy code]\n0-default xv6 policy\n1-priority scheduling\n2-CFS with priority decay\n");
+    exit(1,"");
 }

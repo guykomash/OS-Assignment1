@@ -28,13 +28,13 @@ main(void)
     pid = fork();
     if(pid < 0){
       printf("init: fork failed\n");
-      exit(1,"init.c");
+      exit(1,"");
     }
     if(pid == 0){
       
       exec("sh", argv);
       printf("init: exec sh failed\n");
-      exit(1,"init.c");
+      exit(1,"");
     }
 
     for(;;){
