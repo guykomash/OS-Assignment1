@@ -142,15 +142,17 @@ void
 sys_get_cfs_status(void){
   uint64 addr;
   argaddr(0,&addr);
-  int arr[4];
-  arr[0]=myproc()->pid;
-  arr[1]=myproc()->rtime;
-  arr[2]=myproc()->retime;
-  arr[3]=myproc()->stime;
-  if(addr != 0 && copyout(myproc()->pagetable, addr, (char *)&arr,
-                                  sizeof(arr))<0)
-    // printf("prcossec pid %d cfs status: runnable time %d , run time %d, sleep time:%d\n",myproc()->pid,myproc()->retime,myproc()->rtime, myproc()->stime);
-    printf("procees geting cfs pid :\n",myproc()->pid);
+  struct proc *p=myproc();
+  int arr[5];
+  arr[0]=p->pid;
+  arr[1]=p->cfs_priority;
+  arr[2]=p->rtime;
+  arr[3]=p->retime;
+  arr[4]=p->stime;
+  if(addr != 0 && copyout(p->pagetable, addr, (char *)&arr,
+                                  sizeof(arr))<0){
+        printf("failed to get cfs status of process :%d", p->pid);
+      }
 }
 
 
