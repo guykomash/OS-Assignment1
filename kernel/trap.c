@@ -80,7 +80,7 @@ usertrap(void)
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2){
     myproc()->accumulator += myproc()->ps_priority;
-    printf("Process name:[%d], priority:[%d] have finished a time quantum\n",p->pid,p->cfs_priority);
+    printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum\n",p->pid,p->name,p->cfs_priority);
     update_vruntime();
     yield();
   }
@@ -159,7 +159,7 @@ kerneltrap()
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
       struct proc *p = myproc();
-      printf("Process name:[%d], priority:[%d] have finished a time quantum\n",p->pid,p->cfs_priority);
+      printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum\n",p->pid,p->name,p->cfs_priority);
       update_vruntime();
       myproc()->accumulator += myproc()->ps_priority;
        //printf("%d\n",p->accumulator);

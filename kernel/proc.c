@@ -196,21 +196,21 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
   
-  sched_policy = 2;
+  //sched_policy = 2;
 
   //Task 5 new procees
   //priority = 5, 
   //accumulator = minimum value of all the runnable/running processes
-  if(sched_policy==1){
+  //if(sched_policy==1){}
   p->ps_priority = 5;
   p->accumulator = get_min_acc();
-  }
-  if (sched_policy==2){
+  
+  //if (sched_policy==2){}
     p->cfs_priority=1;
     p->rtime=0;
     p->retime=0;
     p->stime=0;
-  }
+  
 
   return p;
 }
@@ -590,22 +590,22 @@ scheduler(void)
   }
       if(sched_policy == 2){
       if(policy_flag != 2){
-        printf("CPU %d priority scheduling policy [%d]\n",cpuid(),sched_policy);
+        printf("CPU %d CFS with decay priority scheduling policy [%d]\n",cpuid(),sched_policy);
         policy_flag = 2;
       }  
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
     //Task 5
     struct proc * min_cfs_proc = 0;
-    long long min_vruntime=0;
+    long long min_vruntime = 0;
     for(p = proc; p < &proc[NPROC]; p++){
       acquire(&p->lock);
       if(p->state == RUNNABLE){
         if(p->pid==4){
-          printf("number 4\n");
+          // printf("number 4\n");
         }
         if (min_cfs_proc == 0){
-           min_cfs_proc=p;
+           min_cfs_proc = p;
            long long decay_factor= p->cfs_priority*25 +75;
            long long total_time=p->rtime+p->stime+p->retime;
            long long vruntime= decay_factor*p->rtime/total_time;
@@ -625,7 +625,7 @@ scheduler(void)
         //   printf("my  fraction time : %d of procees %d\n",fraction,p->pid);
         //printf("my  vruntime : %d of procees %d\n",vruntime,p->pid);
         if (vruntime<min_vruntime){
-               printf("my chosen vruntime : %d of procees %d with priority %d\n",vruntime,p->pid, p->cfs_priority);
+            //  printf("my chosen vruntime : %d of procees %d with priority %d\n",vruntime,p->pid, p->cfs_priority);
           // p is better then current min_cfs_proc
           // Release current min_acc_proc lock , keep holding the p lock
             release(&min_cfs_proc->lock);
@@ -650,6 +650,7 @@ scheduler(void)
      
       min_cfs_proc->state = RUNNING;
       c->proc = min_cfs_proc;
+      printf("CPU %d new process running %d\n",cpuid(),min_cfs_proc->pid);
       swtch(&c->context, &min_cfs_proc->context);
 
       // Process returned from context switch
@@ -680,7 +681,7 @@ scheduler(void)
           // before jumping back to us.
           p->state = RUNNING;
           c->proc = p;
-          printf("chosen proc is pid: %d\n",p->pid);
+          printf("CPU %d chosen proc is pid: %d name= %s\n",cpuid(),p->pid,p->name);
           swtch(&c->context, &p->context);
 
           // Process is done running for now.
@@ -791,6 +792,8 @@ sleep(void *chan, struct spinlock *lk)
 int
 update_vruntime(void)
 {
+  // printf("CPU %d entering update_vruntime pid: %d name %s\n",cpuid(),myproc()->pid,myproc()->name);
+
   struct proc *p;
 
   for(p = proc; p < &proc[NPROC]; p++) {
