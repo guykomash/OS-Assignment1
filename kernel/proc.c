@@ -601,6 +601,9 @@ scheduler(void)
     for(p = proc; p < &proc[NPROC]; p++){
       acquire(&p->lock);
       if(p->state == RUNNABLE){
+        if(p->pid==4){
+          printf("number 4\n");
+        }
         if (min_cfs_proc == 0){
            min_cfs_proc=p;
            long long decay_factor= p->cfs_priority*25 +75;
@@ -608,8 +611,8 @@ scheduler(void)
            long long vruntime= decay_factor*p->rtime/total_time;
            min_vruntime=vruntime;
         //  printf("my 0 decay : %d of procees %d\n",decay_factor,p->pid);
-        //  printf("my 0 total run time : %d of procees %d\n",total_time,p->pid);
-         printf("my  0 vruntime : %d of procees %d\n",vruntime,p->pid);
+        // printf("my 0 total run time : %d of procees %d\n",total_time,p->pid);
+        //  printf("my  0 vruntime : %d of procees %d\n",vruntime,p->pid);
         }
         else{
         //calculate the vruntime
@@ -618,11 +621,11 @@ scheduler(void)
            //long long fraction= p->rtime/total_time;
            long long vruntime= decay_factor*p->rtime/total_time;
         //  printf("my  decay : %d of procees %d\n",decay_factor,p->pid);
-        //  printf("my  total run time : %d of procees %d\n",total_time,p->pid);
+        // printf("my  total run time : %d of procees %d\n",total_time,p->pid);
         //   printf("my  fraction time : %d of procees %d\n",fraction,p->pid);
-        printf("my  vruntime : %d of procees %d\n",vruntime,p->pid);
+        //printf("my  vruntime : %d of procees %d\n",vruntime,p->pid);
         if (vruntime<min_vruntime){
-               printf("my chosen vruntime : %d of procees %d\n",vruntime,p->pid);
+               printf("my chosen vruntime : %d of procees %d with priority %d\n",vruntime,p->pid, p->cfs_priority);
           // p is better then current min_cfs_proc
           // Release current min_acc_proc lock , keep holding the p lock
             release(&min_cfs_proc->lock);
