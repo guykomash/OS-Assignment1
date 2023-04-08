@@ -79,6 +79,7 @@ usertrap(void)
     exit(-1,"");
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2){
+    printf("entered");
     myproc()->accumulator += myproc()->ps_priority;
     printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum\n",p->pid,p->name,p->cfs_priority);
     update_vruntime();
@@ -153,12 +154,14 @@ kerneltrap()
     printf("sepc=%p stval=%p\n", r_sepc(), r_stval());
     panic("kerneltrap");
   }
-
+  // if(which_dev == 2){
+  //         update_vruntime();
+  // }
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
-      struct proc *p = myproc();
+      //struct proc *p = myproc();
      // printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum\n",p->pid,p->name,p->cfs_priority);
       update_vruntime();
       myproc()->accumulator += myproc()->ps_priority;
@@ -220,9 +223,8 @@ devintr()
     // software interrupt from a machine-mode timer interrupt,
     // forwarded by timervec in kernelvec.S.
 
-    if(cpuid() == 0){
+    if(cpuid() == 0)
       clockintr();
-    }
     // acknowledge the software interrupt by clearing
     // the SSIP bit in sip.
     w_sip(r_sip() & ~2);

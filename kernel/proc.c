@@ -540,7 +540,7 @@ scheduler(void)
   c->proc = 0;
 
   // Task 7 : init default sched_policy
-  sched_policy = 0;
+  sched_policy = 2;
   int policy_flag = 3;
 
   for(;;){
@@ -627,7 +627,7 @@ scheduler(void)
           // printf("my  run time : %d of procees %d\n",p->rtime,p->pid);
           // printf("my vruntime : %d of procees %d\n",vruntime,p->pid);
         if (vruntime<min_vruntime){
-          printf("my chosen vruntime : %d of procees %d with priority %d\n",vruntime,p->pid, p->cfs_priority);
+          //printf("my chosen vruntime : %d of procees %d with priority %d\n",vruntime,p->pid, p->cfs_priority);
           // p is better then current min_cfs_proc
           // Release current min_acc_proc lock , keep holding the p lock
             release(&min_cfs_proc->lock);
