@@ -154,10 +154,6 @@ kerneltrap()
     printf("sepc=%p stval=%p\n", r_sepc(), r_stval());
     panic("kerneltrap");
   }
-  // if(which_dev == 2){
-  //         update_vruntime();
-  // }
-  // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
@@ -180,9 +176,10 @@ clockintr()
 {
   acquire(&tickslock);
   ticks++;
-  update_vruntime();
+  //cfs
+ // update_vruntime();
   wakeup(&ticks);
-  update_vruntime();
+  //update_vruntime();
   release(&tickslock);
 
 }

@@ -11,14 +11,14 @@ int main(){
         }
         for (int i=0;i<1000000;i++){
             if(i%100000==0){
-                sleep(1);
+                sleep(10);
             }
             }
         int p[5];
         get_cfs_status((int*)&p);
         sleep(15);
         printf("process pid %d with cfs priority: %d - status: run time %d , runnable time %d, sleep time:%d\n",p[0],p[1],p[2], p[3],p[4]);
-        exit(0,"");
+        exit(1,"");
     }
     else{
         int pid2=fork();
@@ -28,14 +28,14 @@ int main(){
         }
             for (int i=0;i<1000000;i++){
                 if(i%100000==0){
-                sleep(1);
+                sleep(10);
             }
         }
             int p[5];
             get_cfs_status((int*)&p);
             sleep(10);
             printf("process pid %d with cfs priority: %d - status: run time %d , runnable time %d, sleep time:%d\n",p[0],p[1],p[2], p[3],p[4]);
-            exit(0,"");
+            exit(1,"");
 
      }
      else{
@@ -46,7 +46,7 @@ int main(){
         }
             for (int i=0;i<1000000;i++){
                 if(i%100000==0){
-                sleep(1);
+                sleep(10);
 
             }
         }
@@ -54,7 +54,7 @@ int main(){
             get_cfs_status((int*)&p);
             sleep(5);
             printf("process pid %d with cfs priority: %d - status: run time %d , runnable time %d, sleep time:%d\n",p[0],p[1],p[2], p[3],p[4]);
-            exit(0,"");
+            exit(1,"");
         }
         else{
         wait(0,0);   

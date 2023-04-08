@@ -12,7 +12,7 @@ struct cpu cpus[NCPU];
 struct proc proc[NPROC];
 
 struct proc *initproc;
-
+int counter=0;
 int nextpid = 1;
 struct spinlock pid_lock;
 
@@ -195,25 +195,10 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-  
-  //sched_policy = 2;
-
-  //Task 5 new procees
-  //priority = 5, 
-  //accumulator = minimum value of all the runnable/running processes
-  //if(sched_policy==1){}
-  p->ps_priority = 5;
-  p->accumulator = get_min_acc();
-  
-  //if (sched_policy==2){}
-    p->cfs_priority=1;
-    p->rtime=0;
-    p->retime=0;
-    p->stime=0;
-  
 
   return p;
 }
+
 
 // free a proc structure and the data hanging from it,
 // including user pages.
@@ -238,7 +223,7 @@ freeproc(struct proc *p)
   p->retime=0;
   p->stime=0;
   p->rtime=0;
-  p->cfs_priority=1;
+  p->cfs_priority=0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -385,15 +370,16 @@ fork(void)
 
   release(&np->lock);
 
- 
-
   acquire(&wait_lock);
   np->parent = p;
-  np->cfs_priority=p->cfs_priority;
   release(&wait_lock);
 
   acquire(&np->lock);
   np->state = RUNNABLE;
+  // np->cfs_priority= p->cfs_priority;
+  // np->retime=0;
+  // np->rtime=0;
+  // np->stime=0;
   release(&np->lock);
 
   return pid;
@@ -524,6 +510,7 @@ int
   }
 }
 
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -601,20 +588,30 @@ scheduler(void)
     intr_on();
     //Task 5
     struct proc * min_cfs_proc = 0;
-    long long min_vruntime = 0;
+    long long min_vruntime = -1;
+    counter++;
     for(p = proc; p < &proc[NPROC]; p++){
       acquire(&p->lock);
       if(p->state == RUNNABLE){
-        if (min_cfs_proc == 0){
+        if (min_vruntime == -1){
            min_cfs_proc = p;
+           printf("new min with cpu:%d min:%d\n",cpuid(),p->pid);
+           printf("counter with cpu :%d counter:%d\n",cpuid(),counter);
            long long decay_factor= p->cfs_priority*25 +75;
            long long total_time=p->rtime+p->stime+p->retime;
-           long long vruntime= decay_factor*p->rtime/total_time;
+           if (total_time==0){
+            min_vruntime=0;
+           }
+           else{
+           long long vruntime= decay_factor*(p->rtime/total_time);
            min_vruntime=vruntime;
-          // printf("my decay : %d of procees %d\n",decay_factor,p->pid);
-          // printf("my total run time : %d of procees %d\n",total_time,p->pid);
-          // printf("my  run time : %d of procees %d\n",p->rtime,p->pid);
-          // printf("my vruntime : %d of procees %d\n",vruntime,p->pid);
+           }
+           
+           //printf("pid:%d  with cpu:%d vruntime:%d\n",p->pid,cpuid(),vruntime);
+           printf("pid:%d min with cpu%d vruntime:%d\n",p->pid,cpuid(),min_vruntime);
+           printf("my decay : %d of procees %d\n",decay_factor,p->pid);
+           printf("my total run time : %d of procees %d\n",total_time,p->pid);
+          printf("my  run time : %d of procees %d\n",p->rtime,p->pid);
         }
         else{
         //calculate the vruntime
@@ -633,6 +630,7 @@ scheduler(void)
             release(&min_cfs_proc->lock);
             min_cfs_proc=p;
             min_vruntime=vruntime;
+
           
         }
         else{release(&p->lock);}
@@ -644,7 +642,7 @@ scheduler(void)
     }
 
     
-    if(min_cfs_proc != 0){
+    if(min_cfs_proc!=0  ){
       // if(min_cfs_proc->pid!=0 && min_cfs_proc->pid!=1 && min_cfs_proc->pid!=2 ){
       //   printf("chosen proc is pid:%d with priority %d", min_cfs_proc->pid,min_cfs_proc->cfs_priority);
       // }
@@ -658,8 +656,10 @@ scheduler(void)
       // Process returned from context switch
 
       c->proc = 0;
-      release(&min_cfs_proc->lock);
+      printf("finished new mim:%d\n",min_cfs_proc->pid);
+         release(&min_cfs_proc->lock);
     }
+ 
 
     // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
   }
@@ -683,7 +683,7 @@ scheduler(void)
           // before jumping back to us.
           p->state = RUNNING;
           c->proc = p;
-          printf("CPU %d chosen proc is pid: %d name= %s\n",cpuid(),p->pid,p->name);
+          //printf("CPU %d chosen proc is pid: %d name= %s\n",cpuid(),p->pid,p->name);
           swtch(&c->context, &p->context);
 
           // Process is done running for now.
@@ -800,7 +800,7 @@ update_vruntime(void)
 
   for(p = proc; p < &proc[NPROC]; p++) {
    
-    // if(p != myproc()){
+    if(p != myproc()){
       acquire(&p->lock);
       if(p->state == SLEEPING) {
         //  if (p->pid !=0 && p->pid !=1 && p->pid !=2)
@@ -818,10 +818,14 @@ update_vruntime(void)
           // printf("update the running time  pid %d", p->pid); 
       }
       release(&p->lock);
-
     }
-      return 1;
+    else{
+      p->rtime++;
+    }
+     
   }
+   return 1;
+}
 
 
 
