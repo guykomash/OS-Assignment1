@@ -79,10 +79,9 @@ usertrap(void)
     exit(-1,"");
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2){
-    printf("entered");
+    //update_vruntime();
     myproc()->accumulator += myproc()->ps_priority;
-    printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum\n",p->pid,p->name,p->cfs_priority);
-    update_vruntime();
+    //printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum(user)\n",p->pid,p->name,p->cfs_priority);
     yield();
   }
 
@@ -161,12 +160,9 @@ kerneltrap()
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
-      //struct proc *p = myproc();
-     // printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum\n",p->pid,p->name,p->cfs_priority);
-      update_vruntime();
-      myproc()->accumulator += myproc()->ps_priority;
-       //printf("%d\n",p->accumulator);
-      yield();
+    myproc()->accumulator += myproc()->ps_priority;
+    //printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum(kernel)\n",myproc()->pid,myproc()->name,myproc()->cfs_priority);
+    yield();
     }
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
@@ -180,9 +176,9 @@ clockintr()
 {
   acquire(&tickslock);
   ticks++;
-  update_vruntime();
+  //update_vruntime();
   wakeup(&ticks);
-  update_vruntime();
+  //update_vruntime();
   release(&tickslock);
 
 }
@@ -223,8 +219,10 @@ devintr()
     // software interrupt from a machine-mode timer interrupt,
     // forwarded by timervec in kernelvec.S.
 
-    if(cpuid() == 0)
+    if(cpuid() == 0){
       clockintr();
+      //update_vruntime();
+      }
     // acknowledge the software interrupt by clearing
     // the SSIP bit in sip.
     w_sip(r_sip() & ~2);

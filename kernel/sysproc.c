@@ -118,9 +118,8 @@ sys_set_ps_priority(void)
 {
   int p;
   argint(0,&p);
-  printf("Process [id=%d] old priority: %d\n",myproc()->pid,myproc()->ps_priority);
   myproc()->ps_priority  = p;
-  printf("Procees [id=%d] new priority: %d\n",myproc()->pid,myproc()->ps_priority);
+  printf("process [id=%d] priority changed [%d]\n",myproc()->pid,myproc()->ps_priority);
   return p;
 }
 
@@ -130,8 +129,8 @@ sys_set_cfs_priority(void){
   int p;
   argint(0,&p);
   if (p==0 || p==1 || p==2){
-    printf("setting  %d priority to %s process\n",p,myproc()->name);
     myproc()->cfs_priority=p;
+    printf("process [id=%d] CFS priority changed [%d]\n",myproc()->pid,myproc()->cfs_priority);
     return 0;
   }
   else
@@ -139,7 +138,8 @@ sys_set_cfs_priority(void){
   }
 
 void
-sys_get_cfs_status(void){
+sys_get_cfs_status(void)
+{
   uint64 addr;
   argaddr(0,&addr);
   struct proc *p=myproc();
@@ -149,10 +149,12 @@ sys_get_cfs_status(void){
   arr[2]=p->rtime;
   arr[3]=p->retime;
   arr[4]=p->stime;
+  acquire(&p->lock);
   if(addr != 0 && copyout(p->pagetable, addr, (char *)&arr,
                                   sizeof(arr))<0){
         printf("failed to get cfs status of process :%d", p->pid);
       }
+  release(&p->lock);
 }
 
 
