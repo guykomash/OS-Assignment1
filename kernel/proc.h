@@ -112,3 +112,7 @@ struct proc {
   int stime;                   // Task 6
   int retime;                  // Task 6
 };
+
+
+// task 7 global variable
+extern int sched_policy;

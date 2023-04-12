@@ -34,12 +34,11 @@ trapinithart(void)
 // called from trampoline.S
 //
 void update_vruntime();
-void update_vruntime2();
 
 void
 usertrap(void)
 {
-  // printf("entered tu user trap\n");
+  
   int which_dev = 0;
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
@@ -82,7 +81,7 @@ usertrap(void)
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2){
     myproc()->accumulator += myproc()->ps_priority;
-    //printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum(user)\n",p->pid,p->name,p->cfs_priority);
+  
     yield();
   }
 
@@ -160,7 +159,6 @@ kerneltrap()
     {
        // Task 5. add priority to accumulator on timer interrupts (time quantum is finished)
     myproc()->accumulator += myproc()->ps_priority;
-    //printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum(kernel)\n",myproc()->pid,myproc()->name,myproc()->cfs_priority);
     yield();
     }
   // the yield() may have caused some traps to occur,
@@ -173,11 +171,11 @@ kerneltrap()
 void
 clockintr()
 {
-  //update_vruntime2();
+  update_vruntime();
   acquire(&tickslock);
   ticks++;
   wakeup(&ticks);
-  update_vruntime2();
+  update_vruntime();
   release(&tickslock);
 
 }

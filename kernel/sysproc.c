@@ -79,7 +79,6 @@ sys_sleep(void)
       release(&tickslock);
       return -1;
     }
-    myproc()->stime++; // Task 6
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
@@ -120,7 +119,6 @@ sys_set_ps_priority(void)
   int p;
   argint(0,&p);
   myproc()->ps_priority  = p;
-  printf("process [id=%d] priority changed [%d]\n",myproc()->pid,myproc()->ps_priority);
   return p;
 }
 
@@ -131,7 +129,6 @@ sys_set_cfs_priority(void){
   argint(0,&p);
   if (p==0 || p==1 || p==2){
     myproc()->cfs_priority=p;
-    printf("process [id=%d] CFS priority changed [%d]\n",myproc()->pid,myproc()->cfs_priority);
     return 0;
   }
   else
@@ -139,7 +136,7 @@ sys_set_cfs_priority(void){
   }
 
 void
-sys_get_cfs_status(void)
+sys_get_cfs_stats(void)
 {
   uint64 addr;
   argaddr(0,&addr);
@@ -151,7 +148,7 @@ sys_get_cfs_status(void)
   arr[3]=p->retime;
   arr[4]=p->stime;
   acquire(&p->lock);
-  
+
   if(addr != 0 && copyout(p->pagetable, addr, (char *)&arr,
                                   sizeof(arr))<0){
         printf("failed to get cfs status of process :%d", p->pid);
