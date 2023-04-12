@@ -209,10 +209,10 @@ found:
   p->accumulator = get_min_acc();
   
   // Task 6 new process
-  // p->cfs_priority=1;
-  // p->rtime=0;
-  // p->retime=0;
-  // p->stime=0;
+  p->cfs_priority=1;
+  p->rtime=0;
+  p->retime=0;
+  p->stime=0;
 
   return p;
 }
@@ -528,31 +528,44 @@ int
   }
 }
 
-// Per-CPU process scheduler.
-// Each CPU calls scheduler() after setting itself up.
-// Scheduler never returns.  It loops, doing:
-//  - choose a process to run.
-//  - swtch to start running that process.
-//  - eventually that process transfers control
-//    via swtch back to the scheduler.
 void
-scheduler(void)
+default_scheduler(struct cpu *c, int *policy_flag){
+
+  struct proc *p;
+  if(*policy_flag != 0){
+   //printf("[CPU %d] [scheduling policy] [%d]\n",cpuid(),sched_policy);
+    *policy_flag = 0;
+  }  
+
+  // Avoid deadlock by ensuring that devices can interrupt.
+  intr_on();
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if(p->state == RUNNABLE) {
+      // Switch to chosen process.  It is the process's job
+      // to release its lock and then reacquire it
+     // before jumping back to us.
+      p->state = RUNNING;
+      c->proc = p;
+     //printf("CPU %d chosen proc is pid: %d name= %s\n",cpuid(),p->pid,p->name);
+      swtch(&c->context, &p->context);
+
+      // Process is done running for now.
+     // It should have changed its p->state before coming back.
+      c->proc = 0;
+    }
+  release(&p->lock);
+  }
+}
+
+void
+task_5_scheduler(struct cpu *c, int *policy_flag)
 {
   struct proc *p;
-  struct cpu *c = mycpu();
-
-  c->proc = 0;
-
-  // Task 7 : init default sched_policy
-  sched_policy = 1;
-  int policy_flag = 3;
-
-  for(;;){
-    
-   if(sched_policy == 0){
-      if(policy_flag != 1){
-        printf("CPU %d priority scheduling policy [%d]\n",cpuid(),sched_policy);
-        policy_flag = 1;
+  if(*policy_flag != 1){
+        //printf("[CPU %d] [scheduling policy] [%d]\n",cpuid(),sched_policy);
+        *policy_flag = 1;
       }  
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
@@ -592,7 +605,6 @@ scheduler(void)
 
     
     if(min_acc_proc != 0){
-
       // CPU FOUND A RUNNABLE PROCESS! 
       min_acc_proc->state = RUNNING;
       c->proc = min_acc_proc;
@@ -604,12 +616,16 @@ scheduler(void)
     }
 
     // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
-  }
+  
+}
 
-    else if(sched_policy == 2){
-      if(policy_flag != 2){
-        printf("CPU %d CFS with decay priority scheduling policy [%d]\n",cpuid(),sched_policy);
-        policy_flag = 2;
+void
+task_6_scheduler(struct cpu *c , int *policy_flag){
+
+    struct proc *p;
+    if(*policy_flag != 2){
+       // printf("[CPU %d] [scheduling policy] [%d]\n",cpuid(),sched_policy);
+        *policy_flag = 2;
       }  
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
@@ -653,7 +669,7 @@ scheduler(void)
      
       min_cfs_proc->state = RUNNING;
       c->proc = min_cfs_proc;
-      printf("CPU %d chosen proc is pid: %d name= %s\n",cpuid(),p->pid,p->name);
+      //printf("CPU %d chosen proc is pid: %d name= %s\n",cpuid(),min_cfs_proc->pid,min_cfs_proc->name);
       swtch(&c->context, &min_cfs_proc->context);
 
       // Process returned from context switch
@@ -663,43 +679,42 @@ scheduler(void)
     }
 
     // ELSE no context switch will happen. CPU will loop and try again to find a RUNNABLE process.
-  }
-  else if(sched_policy==0){ 
-      if(policy_flag != 0){
-        printf("CPU %d default xv6 policy [%d]\n",cpuid(),sched_policy);
-        policy_flag = 0;
-        }  
+}
 
-      // DEFAULT SCHEDULER
+// Per-CPU process scheduler.
+// Each CPU calls scheduler() after setting itself up.
+// Scheduler never returns.  It loops, doing:
+//  - choose a process to run.
+//  - swtch to start running that process.
+//  - eventually that process transfers control
+//    via swtch back to the scheduler.
+void
+scheduler(void)
+{
+  struct cpu *c = mycpu();
 
-      // Avoid deadlock by ensuring that devices can interrupt.
-      intr_on();
+  c->proc = 0;
 
-      for(p = proc; p < &proc[NPROC]; p++) {
-        acquire(&p->lock);
-        if(p->state == RUNNABLE) {
-          // Switch to chosen process.  It is the process's job
-          // to release its lock and then reacquire it
-          // before jumping back to us.
-          p->state = RUNNING;
-          c->proc = p;
-          //printf("CPU %d chosen proc is pid: %d name= %s\n",cpuid(),p->pid,p->name);
-          swtch(&c->context, &p->context);
+  sched_policy = 0;
+  int policy_flag = -1;
 
-          // Process is done running for now.
-          // It should have changed its p->state before coming back.
-          c->proc = 0;
-        }
-        release(&p->lock);
-      }
-      
+  for(;;){
+
+    if(sched_policy == 0){ 
+      default_scheduler(c,&policy_flag);
+    }
+    
+    else if(sched_policy == 1){
+      task_5_scheduler(c,&policy_flag);
+    }
+
+    else if(sched_policy == 2){
+      task_6_scheduler(c,&policy_flag);
     }
   }
 }
 
 
-     
- 
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
@@ -826,6 +841,35 @@ update_vruntime(void)
       return 1;
   }
 
+//Task 7
+void
+update_vruntime2(void)
+{
+  // printf("CPU %d entering update_vruntime pid: %d name %s\n",cpuid(),myproc()->pid,myproc()->name);
+
+  struct proc *p;
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+   
+      if(p->state == RUNNABLE) {
+        p->retime++;
+        //printf("%d runnable| ", p->pid);
+      }
+      else if (p->state == RUNNING){
+        p->rtime++;
+        //printf("%d running| ", p->pid);
+
+      }
+
+      else if(p->state == SLEEPING) {
+        //  if (p->pid !=0 && p->pid !=1 && p->pid !=2)
+        // printf("update the sleeping time  pid %d", p->pid);
+        p->stime++;
+    }
+  }
+}
+
+
 
 
 // Wake up all processes sleeping on chan.
@@ -836,19 +880,19 @@ wakeup(void *chan)
   struct proc *p;
 
   for(p = proc; p < &proc[NPROC]; p++) {
+
+    // // Task 6
+    // printf("%d enter\n",p->pid);
+    // update_vruntime2(p);
+
     if(p != myproc()){
       acquire(&p->lock);
-      if(p->state == SLEEPING && p->chan == chan) {
-        p->state = RUNNABLE;
-        
-        /**/
-        // Task 5
-        if( sched_policy== 1){
-        int new_acc = get_min_acc();
-        //printf("wakeup(): old acc %d , new acc %d\n",p->accumulator,new_acc);
-        p->accumulator = new_acc;
-        }
 
+      if(p->state == SLEEPING && p->chan == chan) {
+       p->state = RUNNABLE;
+        // Task 5
+        int new_acc = get_min_acc();
+        p->accumulator = new_acc;
         
         
       }

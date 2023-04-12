@@ -34,6 +34,8 @@ trapinithart(void)
 // called from trampoline.S
 //
 void update_vruntime();
+void update_vruntime2();
+
 void
 usertrap(void)
 {
@@ -79,7 +81,6 @@ usertrap(void)
     exit(-1,"");
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2){
-    //update_vruntime();
     myproc()->accumulator += myproc()->ps_priority;
     //printf("Process pid:[%d] name:[%s], priority:[%d] have finished a time quantum(user)\n",p->pid,p->name,p->cfs_priority);
     yield();
@@ -153,9 +154,7 @@ kerneltrap()
     printf("sepc=%p stval=%p\n", r_sepc(), r_stval());
     panic("kerneltrap");
   }
-  // if(which_dev == 2){
-  //         update_vruntime();
-  // }
+
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     {
@@ -174,11 +173,11 @@ kerneltrap()
 void
 clockintr()
 {
+  //update_vruntime2();
   acquire(&tickslock);
   ticks++;
-  //update_vruntime();
   wakeup(&ticks);
-  //update_vruntime();
+  update_vruntime2();
   release(&tickslock);
 
 }
@@ -221,7 +220,6 @@ devintr()
 
     if(cpuid() == 0){
       clockintr();
-      //update_vruntime();
       }
     // acknowledge the software interrupt by clearing
     // the SSIP bit in sip.
