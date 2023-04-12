@@ -151,7 +151,7 @@ sys_get_cfs_status(void)
   arr[3]=p->retime;
   arr[4]=p->stime;
   acquire(&p->lock);
-
+  
   if(addr != 0 && copyout(p->pagetable, addr, (char *)&arr,
                                   sizeof(arr))<0){
         printf("failed to get cfs status of process :%d", p->pid);
